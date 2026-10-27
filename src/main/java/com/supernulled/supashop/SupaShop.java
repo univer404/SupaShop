@@ -182,7 +182,7 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
     }
 
     private void buyMoneyItem(Player p, String category, String materialName) {
-        if (economy == null) { p.sendMessage(message("messages.prefix") + color("<red>Shop economy is not available. Install Vault and an economy provider.")); return; }
+        if (economy == null) { p.sendMessage(message("messages.prefix").append(color("<red>Shop economy is not available. Install Vault and an economy provider."))); return; }
         Material material = Material.matchMaterial(materialName);
         if (material == null) return;
         int price = getConfig().getInt("shop." + category + "." + materialName, -1);
@@ -286,5 +286,5 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
         catch (IllegalArgumentException ignored) { }
     }
     private String format(int value) { return new DecimalFormat("#,##0").format(value); }
-    private String human(String value) { return value.toLowerCase(Locale.ROOT).replace('_', ' ').replaceAll("\\b\\w", m -> m.group().toUpperCase(Locale.ROOT)); }
+    private String human(String value) { String[] words = value.toLowerCase(Locale.ROOT).replace('_', ' ').split(" "); StringBuilder result = new StringBuilder(); for (String word : words) { if (word.isEmpty()) continue; if (!result.isEmpty()) result.append(' '); result.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1)); } return result.toString(); }
 }

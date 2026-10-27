@@ -31,6 +31,7 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
     private Economy economy;
     private File balancesFile;
     private YamlConfiguration balances;
+    private YamlConfiguration guiConfig;
     private NamespacedKey actionKey;
     private NamespacedKey idKey;
     private final Map<UUID, Purchase> pending = new HashMap<>();
@@ -41,6 +42,8 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
 
     @Override public void onEnable() {
         saveDefaultConfig();
+        saveResource("gui.yml", false);
+        loadGuiConfig();
         actionKey = new NamespacedKey(this, "action");
         idKey = new NamespacedKey(this, "item_id");
         loadBalances();
@@ -70,7 +73,7 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
             if (!sender.hasPermission("supashop.admin")) { sender.sendMessage(color("<red>You don't have permission.")); return true; }
-            reloadConfig(); setupEconomy(); sender.sendMessage(color("<green>SupaShop configuration reloaded.")); return true;
+            reloadConfig(); loadGuiConfig(); setupEconomy(); sender.sendMessage(color("<green>SupaShop configuration reloaded.")); return true;
         }
         if (!(sender instanceof Player player)) { sender.sendMessage("This command can only be used by a player."); return true; }
         if (!player.hasPermission("supashop.use")) { player.sendMessage(color("<red>You don't have permission.")); return true; }
@@ -79,7 +82,7 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
     }
 
     private void openMain(Player p) {
-        Inventory inv = Bukkit.createInventory(null, 27, title("titles.main"));
+        Inventory inv = Bukkit.createInventory(null, guiConfig.getInt("layouts.main.size", 27), title("titles.main"));
         set(inv, 11, Material.END_STONE, "<#00F986>ᴇɴᴅ", "end");
         set(inv, 12, Material.NETHERRACK, "<#00F986>ɴᴇᴛʜᴇʀ", "nether");
         set(inv, 13, Material.TOTEM_OF_UNDYING, "<#00F986>ɢᴇᴀʀ", "gear");
@@ -92,12 +95,13 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
         String path = "shop." + category;
         ConfigurationSection section = getConfig().getConfigurationSection(path);
         if (section == null) return;
-        Inventory inv = Bukkit.createInventory(null, 27, title("titles." + category));
+        Inventory inv = Bukkit.createInventory(null, guiConfig.getInt("layouts.category.size", 27), title("titles." + category));
         back(inv);
-        int slot = 9;
+        int slot = guiConfig.getInt("layouts.category.first-item-slot", 9);
+        int lastSlot = guiConfig.getInt("layouts.category.last-item-slot", 17);
         for (String key : section.getKeys(false)) {
             Material material = Material.matchMaterial(key);
-            if (material == null || slot > 17) continue;
+            if (material == null || slot > lastSlot) continue;
             int price = Math.max(0, section.getInt(key));
             ItemStack item = new ItemStack(material);
             ItemMeta meta = item.getItemMeta();
@@ -110,19 +114,21 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
     }
 
     private void openShardShop(Player p) {
-        Inventory inv = Bukkit.createInventory(null, 27, title("titles.shard"));
+        Inventory inv = Bukkit.createInventory(null, guiConfig.getInt("layouts.shard.size", 27), title("titles.shard"));
         ConfigurationSection keys = getConfig().getConfigurationSection("shard-shop.keys");
-        int slot = 2;
+        int slot = guiConfig.getInt("layouts.shard.first-key-slot", 2);
+        int lastKeySlot = guiConfig.getInt("layouts.shard.last-key-slot", 6);
         if (keys != null) for (String id : keys.getKeys(false)) {
-            if (slot > 6) break;
+            if (slot > lastKeySlot) break;
             String display = keys.getString(id + ".display", id + " Key");
             ItemStack item = named(Material.TRIPWIRE_HOOK, display, "<white>Buy Price: <#A303F9>" + keys.getInt(id + ".price") + "x Shards");
             inv.setItem(slot, tagged(item, "key:" + id)); slot++;
         }
         ConfigurationSection spawners = getConfig().getConfigurationSection("shard-shop.spawners");
-        slot = 9;
+        slot = guiConfig.getInt("layouts.shard.first-spawner-slot", 9);
+        int lastSpawnerSlot = guiConfig.getInt("layouts.shard.last-spawner-slot", 17);
         if (spawners != null) for (String id : spawners.getKeys(false)) {
-            if (slot > 17) break;
+            if (slot > lastSpawnerSlot) break;
             String display = spawners.getString(id + ".display", "<light_purple>Spawner");
             ItemStack item = named(Material.SPAWNER, display, "<yellow>" + id.replace('_', ' ') + "</yellow>", "<white>Buy Price: <#A303F9>" + spawners.getInt(id + ".price") + "x Shards");
             inv.setItem(slot, tagged(item, "spawner:" + id)); slot++;
@@ -136,10 +142,10 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
         if (price < 0) return;
         Purchase purchase = new Purchase(kind, id, price, kind.equals("spawner") ? Material.SPAWNER : Material.TRIPWIRE_HOOK);
         pending.put(p.getUniqueId(), purchase);
-        Inventory inv = Bukkit.createInventory(null, 27, title("titles.confirm"));
-        inv.setItem(13, tagged(named(purchase.material(), kind.equals("key") ? getConfig().getString(path + ".display", id) : getConfig().getString(path + ".display", id), "<white>Price: <#A303F9>" + price + " Shards"), "preview"));
-        inv.setItem(11, tagged(named(Material.RED_STAINED_GLASS_PANE, "<#fd0100>ᴄᴀɴᴄᴇʟ", "<white>Click to cancel"), "cancel"));
-        inv.setItem(15, tagged(named(Material.LIME_STAINED_GLASS_PANE, "<#01fc01>ᴄᴏɴꜰɪʀᴍ", "<white>Click to buy"), "confirm"));
+        Inventory inv = Bukkit.createInventory(null, guiConfig.getInt("layouts.confirm.size", 27), title("titles.confirm"));
+        inv.setItem(guiConfig.getInt("layouts.confirm.preview-slot", 13), tagged(named(purchase.material(), getConfig().getString(path + ".display", id), "<white>Price: <#A303F9>" + price + " Shards"), "preview"));
+        inv.setItem(guiConfig.getInt("layouts.confirm.cancel.slot", 11), tagged(named(Material.matchMaterial(guiConfig.getString("layouts.confirm.cancel.material", "RED_STAINED_GLASS_PANE")), guiConfig.getString("layouts.confirm.cancel.display", "<#fd0100>ᴄᴀɴᴄᴇʟ"), guiConfig.getString("layouts.confirm.cancel.lore", "<white>Click to cancel")), "cancel"));
+        inv.setItem(guiConfig.getInt("layouts.confirm.confirm-button.slot", 15), tagged(named(Material.matchMaterial(guiConfig.getString("layouts.confirm.confirm-button.material", "LIME_STAINED_GLASS_PANE")), guiConfig.getString("layouts.confirm.confirm-button.display", "<#01fc01>ᴄᴏɴꜰɪʀᴍ"), guiConfig.getString("layouts.confirm.confirm-button.lore", "<white>Click to buy")), "confirm"));
         p.openInventory(inv);
     }
 
@@ -248,7 +254,9 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
         inv.setItem(slot, tagged(named(material, display, "<white>Click to view"), action));
     }
     private void back(Inventory inv) {
-        inv.setItem(getConfig().getInt("gui.back-slot", 18), tagged(named(Material.RED_STAINED_GLASS_PANE, "<#fd0100>ʙᴀᴄᴋ", "<white>Click to return"), "back"));
+        String path = plain(inv.getViewers().isEmpty() ? Component.empty() : inv.getViewers().get(0).getOpenInventory().title()).equals(plain(title("titles.shard"))) ? "layouts.shard.back" : "layouts.category.back";
+        Material material = Material.matchMaterial(guiConfig.getString(path + ".material", "RED_STAINED_GLASS_PANE"));
+        inv.setItem(guiConfig.getInt(path + ".slot", 18), tagged(named(material == null ? Material.RED_STAINED_GLASS_PANE : material, guiConfig.getString(path + ".display", "<#fd0100>ʙᴀᴄᴋ"), guiConfig.getString(path + ".lore", "<white>Click to return")), "back"));
     }
     private ItemStack named(Material material, String display, String... lore) {
         ItemStack item = new ItemStack(material);
@@ -262,7 +270,8 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
         meta.getPersistentDataContainer().set(actionKey, PersistentDataType.STRING, action);
         item.setItemMeta(meta); return item;
     }
-    private Component title(String path) { return color(getConfig().getString(path, "Shop")); }
+    private void loadGuiConfig() { guiConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "gui.yml")); }
+    private Component title(String path) { return color(guiConfig.getString(path, getConfig().getString(path, "Shop"))); }
     private Component color(String text) {
         if (text == null) return Component.empty();
         if (text.contains("<#") || text.contains("<red>") || text.contains("<white>") || text.contains("<green>") || text.contains("<yellow>") || text.contains("<dark_gray>") || text.contains("<light_purple>")) return mini.deserialize(text);

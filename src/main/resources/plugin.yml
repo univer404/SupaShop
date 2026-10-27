@@ -1,0 +1,19 @@
+name: SupaShop
+version: 1.0.0
+main: com.supernulled.supashop.SupaShop
+api-version: '1.21'
+softdepend: [Vault, PlaceholderAPI, ExcellentShop, SilkSpawners, WildStacker, EpicSpawners, SuperiorSkyblock2]
+commands:
+  shop:
+    description: Open the main shop.
+    usage: /shop
+  shardshop:
+    description: Open the shard shop.
+    usage: /shardshop
+permissions:
+  supashop.use:
+    description: Allows access to SupaShop menus.
+    default: true
+  supashop.admin:
+    description: Reload SupaShop configuration.
+    default: op

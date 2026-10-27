@@ -1,0 +1,115 @@
+# SupaShop settings. Prices are whole numbers.
+messages:
+  prefix: "<#A303F9>SupaShop <dark_gray>» "
+  purchase-success: "<white>You bought <#00a4fc>%amount% %item% <white>for <#00fc00>$%price%"
+  not-enough-money: "<red>You don't have enough money."
+  inventory-full: "<red>Your inventory is full."
+  not-enough-shards: "<red>You don't have enough shards."
+  shard-purchase-success: "<white>You bought <#00a4fc>%item% <white>for <#A303F9>%price% Shards"
+  provider-missing: "<red>No configured spawner provider is available. Please contact an administrator."
+sounds:
+  success: ENTITY_EXPERIENCE_ORB_PICKUP
+  failure: ENTITY_VILLAGER_NO
+  click: UI_BUTTON_CLICK
+  volume: 0.5
+titles:
+  main: "ѕʜᴏᴘ"
+  end: "ѕʜᴏᴘ - ᴇɴᴅ"
+  nether: "ѕʜᴏᴘ - ɴᴇᴛʜᴇʀ"
+  gear: "ѕʜᴏᴘ - ɢᴇᴀʀ"
+  food: "ѕʜᴏᴘ - ꜰᴏᴏᴅ"
+  shard: "ѕʜᴏᴘ - ѕʜᴀʀᴅ ѕʜᴏᴘ"
+  confirm: "ᴄᴏɴꜰɪʀᴍ ᴘᴜʀᴄʜᴀѕᴇ"
+currency:
+  shards:
+    enabled: true
+    starting-balance: 0
+    # Optional admin command integration for another shard currency. Leave blank to use SupaShop's own persistent balances.
+    external-balance-placeholder: ""
+shop:
+  end:
+    ENDER_CHEST: 2500
+    ENDER_PEARL: 75
+    END_STONE: 8
+    DRAGON_BREATH: 1000
+    END_ROD: 100
+    CHORUS_FRUIT: 10
+    POPPED_CHORUS_FRUIT: 15
+    SHULKER_SHELL: 350
+    SHULKER_BOX: 800
+  nether:
+    BLAZE_ROD: 150
+    NETHER_WART: 15
+    GLOWSTONE_DUST: 15
+    MAGMA_CREAM: 15
+    GHAST_TEAR: 350
+    QUARTZ: 15
+    SOUL_SAND: 50
+    MAGMA_BLOCK: 35
+    CRYING_OBSIDIAN: 150
+  gear:
+    OBSIDIAN: 100
+    END_CRYSTAL: 350
+    RESPAWN_ANCHOR: 1000
+    GLOWSTONE: 100
+    TOTEM_OF_UNDYING: 1250
+    ENDER_PEARL: 75
+    GOLDEN_APPLE: 250
+    EXPERIENCE_BOTTLE: 100
+    ARROW: 250
+  food:
+    POTATO: 75
+    SWEET_BERRIES: 50
+    MELON_SLICE: 10
+    CARROT: 65
+    APPLE: 25
+    COOKED_CHICKEN: 30
+    COOKED_BEEF: 35
+    GOLDEN_CARROT: 50
+shard-shop:
+  keys:
+    COMMON: {price: 200, display: "<#3CA720>ᴄᴏᴍᴍᴏɴ ᴋᴇʏ", command: "commonkeys give %player% 1 -s"}
+    PRIME: {price: 1500, display: "<#2386D3>ᴘʀɪᴍᴇ ᴋᴇʏ", command: "primekeys give %player% 1 -s"}
+    GOLD: {price: 1500, display: "<#E3B900>ɢᴏʟᴅ ᴋᴇʏ", command: "goldkeys give %player% 1 -s"}
+    AMETHYST: {price: 4000, display: "<#6E3AAD>ᴀᴍᴇᴛʜʏѕᴛ ᴋᴇʏ", command: "amethystkeys give %player% 1 -s"}
+    CRIMSON: {price: 2000, display: "<#C42119>ᴄʀɪᴍѕᴏɴ ᴋᴇʏ", command: "crimsonkeys give %player% 1 -s"}
+  spawners:
+    PIG: {price: 250, entity: pig, display: "<yellow>Pig Spawner"}
+    COW: {price: 350, entity: cow, display: "<yellow>Cow Spawner"}
+    ZOMBIE: {price: 400, entity: zombie, display: "<yellow>Zombie Spawner"}
+    SPIDER: {price: 750, entity: spider, display: "<yellow>Spider Spawner"}
+    SKELETON: {price: 500, entity: skeleton, display: "<yellow>Skeleton Spawner"}
+    CREEPER: {price: 625, entity: creeper, display: "<yellow>Creeper Spawner"}
+    ZOMBIFIED_PIGLIN: {price: 750, entity: zombified_piglin, display: "<yellow>Zombified Piglin Spawner"}
+    BLAZE: {price: 1000, entity: blaze, display: "<yellow>Blaze Spawner"}
+    IRON_GOLEM: {price: 1500, entity: iron_golem, display: "<yellow>Iron Golem Spawner"}
+# Virtual-spawner integrations are command adapters because different plugins expose different APIs/commands.
+# Add installed provider plugin names to detect; use the command format required by YOUR provider.
+# %player% = buyer, %entity% = configured mob ID, %amount% = quantity.
+spawner-provider:
+  auto-detect: true
+  # If multiple provider plugins are installed, first matching entry below wins.
+  providers:
+    - plugin: "ExcellentShop"
+      commands:
+        default: "ss give %player% %entity% %amount%"
+    - plugin: "SilkSpawners"
+      commands:
+        default: "silkspawners give %player% %entity% %amount%"
+    - plugin: "WildStacker"
+      commands:
+        default: "wildstacker give spawner %player% %entity% %amount%"
+    - plugin: "EpicSpawners"
+      commands:
+        default: "epicspawners give %player% %entity% %amount%"
+  # If auto-detect is false, this command is used for every spawner purchase.
+  # Leave empty to disable spawner purchases until a provider is configured.
+  fallback-command: ""
+  # Per-mob command overrides; these override provider.commands.default.
+  command-overrides: {}
+gui:
+  fill-empty-slots: false
+  back-slot: 18
+  confirm-slot: 15
+  cancel-slot: 11
+  item-slot: 13

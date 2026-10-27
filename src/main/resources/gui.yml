@@ -1,0 +1,65 @@
+# SupaShop GUI layout and appearance.
+# GUI titles, sizes, category icons, slots, and button appearance are kept here separately
+# from prices, economy settings, messages, and integrations in config.yml.
+titles:
+  main: "ѕʜᴏᴘ"
+  end: "ѕʜᴏᴘ - ᴇɴᴅ"
+  nether: "ѕʜᴏᴘ - ɴᴇᴛʜᴇʀ"
+  gear: "ѕʜᴏᴘ - ɢᴇᴀʀ"
+  food: "ѕʜᴏᴘ - ꜰᴏᴏᴅ"
+  shard: "ѕʜᴏᴘ - ѕʜᴀʀᴅ ѕʜᴏᴘ"
+  confirm: "ᴄᴏɴꜰɪʀᴍ ᴘᴜʀᴄʜᴀѕᴇ"
+
+layouts:
+  main:
+    size: 27
+    categories:
+      end: {slot: 11, material: END_STONE, display: "<#00F986>ᴇɴᴅ"}
+      nether: {slot: 12, material: NETHERRACK, display: "<#00F986>ɴᴇᴛʜᴇʀ"}
+      gear: {slot: 13, material: TOTEM_OF_UNDYING, display: "<#00F986>ɢᴇᴀʀ"}
+      food: {slot: 14, material: COOKED_BEEF, display: "<#00F986>ꜰᴏᴏᴅ"}
+      shard: {slot: 15, material: AMETHYST_SHARD, display: "<#A303F9>ꜱʜᴀʀᴅ ꜱʜᴏᴘ"}
+  category:
+    size: 27
+    first-item-slot: 9
+    last-item-slot: 17
+    back:
+      slot: 18
+      material: RED_STAINED_GLASS_PANE
+      display: "<#fd0100>ʙᴀᴄᴋ"
+      lore: "<white>Click to return"
+  shard:
+    size: 27
+    first-key-slot: 2
+    last-key-slot: 6
+    first-spawner-slot: 9
+    last-spawner-slot: 17
+    back:
+      slot: 18
+      material: RED_STAINED_GLASS_PANE
+      display: "<#fd0100>ʙᴀᴄᴋ"
+      lore: "<white>Click to return"
+    key:
+      material: TRIPWIRE_HOOK
+      lore:
+        - "<white>Buy Price: <#A303F9>%price%x Shards"
+  spawner:
+    material: SPAWNER
+    lore:
+      - "<yellow>%entity_display% Spawner"
+      - "<white>Buy Price: <#A303F9>%price%x Shards"
+  confirm:
+    size: 27
+    preview-slot: 13
+    cancel:
+      slot: 11
+      material: RED_STAINED_GLASS_PANE
+      display: "<#fd0100>ᴄᴀɴᴄᴇʟ"
+      lore: "<white>Click to cancel"
+    confirm-button:
+      slot: 15
+      material: LIME_STAINED_GLASS_PANE
+      display: "<#01fc01>ᴄᴏɴꜰɪʀᴍ"
+      lore: "<white>Click to buy"
+
+fill-empty-slots: false

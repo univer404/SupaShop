@@ -96,7 +96,7 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
 
     private void onSellClose(org.bukkit.event.inventory.InventoryCloseEvent event) {
         if (!(event.getPlayer() instanceof Player p)) return;
-        if (!plain(event.getView().title()).equals(plain(color(guiConfig.getString("sell.title", "ѕᴇʟʟ ɪᴛᴇᴍѕ")))) return;
+        if (!plain(event.getView().title()).equals(plain(color(guiConfig.getString("sell.title", "ѕᴇʟʟ ɪᴛᴇᴍѕ"))))) return;
         Inventory inv = event.getInventory();
         double total = 0;
         List<ItemStack> unsellable = new ArrayList<>();
@@ -264,7 +264,7 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
     @EventHandler public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player p)) return;
         String view = plain(event.getView().title());
-        if (view.equals(plain(color(guiConfig.getString("sell.title", "ѕᴇʟʟ ɪᴛᴇᴍѕ")))) { event.setCancelled(true); return; }
+        if (view.equals(plain(color(guiConfig.getString("sell.title", "ѕᴇʟʟ ɪᴛᴇᴍѕ"))))) { event.setCancelled(true); return; }
         if (!isOurTitle(view)) return;
         event.setCancelled(true);
         if (event.getClickedInventory() == null || event.getClickedInventory() != event.getView().getTopInventory()) return;

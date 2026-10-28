@@ -100,8 +100,10 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
         Inventory inv = event.getInventory();
         double total = 0;
         List<ItemStack> unsellable = new ArrayList<>();
+        List<ItemStack> originalItems = new ArrayList<>();
         for (ItemStack stack : inv.getContents()) {
             if (stack == null || stack.getType().isAir()) continue;
+            originalItems.add(stack.clone());
             double worth = itemWorth(stack, true);
             if (worth > 0) total += worth;
             else unsellable.add(stack.clone());
@@ -113,7 +115,8 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
             p.sendMessage(color(message)); p.sendActionBar(color(message)); play(p, "sounds.sell-success");
         } else if (total > 0) {
             p.sendMessage(color("<red>Sell economy is unavailable. Items were returned."));
-            for (ItemStack stack : inv.getContents()) if (stack != null && !stack.getType().isAir()) unsellable.add(stack.clone());
+            unsellable.clear();
+            unsellable.addAll(originalItems);
         }
         for (ItemStack item : unsellable) {
             Map<Integer, ItemStack> leftovers = p.getInventory().addItem(item);

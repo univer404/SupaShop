@@ -4,6 +4,11 @@ import net.milkbowl.vault.economy.Economy;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.format.TextDecoration;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
+import org.bukkit.inventory.meta.BlockStateMeta;
+import org.bukkit.block.ShulkerBox;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -31,6 +36,7 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
     private Economy economy;
     private File balancesFile;
     private YamlConfiguration balances;
+    private YamlConfiguration prices;
     private YamlConfiguration guiConfig;
     private NamespacedKey actionKey;
     private NamespacedKey idKey;
@@ -43,15 +49,119 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
     @Override public void onEnable() {
         saveDefaultConfig();
         saveResource("gui.yml", false);
+        saveResource("prices.yml", false);
         loadGuiConfig();
+        loadPrices();
         actionKey = new NamespacedKey(this, "action");
         idKey = new NamespacedKey(this, "item_id");
         loadBalances();
         setupEconomy();
         Objects.requireNonNull(getCommand("shop")).setExecutor(this);
         Objects.requireNonNull(getCommand("shardshop")).setExecutor(this);
+        Objects.requireNonNull(getCommand("sell")).setExecutor(this);
+        Objects.requireNonNull(getCommand("worth")).setExecutor(this);
         Bukkit.getPluginManager().registerEvents(this, this);
         getLogger().info("SupaShop enabled. Vault economy: " + (economy != null));
+    }
+
+
+    private void loadPrices() {
+        File file = new File(getDataFolder(), "prices.yml");
+        prices = YamlConfiguration.loadConfiguration(file);
+    }
+
+    private void openSellGui(Player p) {
+        Inventory inv = Bukkit.createInventory(null, 54, color(guiConfig.getString("sell.title", "ѕᴇʟʟ ɪᴛᴇᴍѕ")));
+        p.openInventory(inv);
+    }
+
+    private void showWorth(Player p) {
+        ItemStack item = p.getInventory().getItemInMainHand();
+        if (item.getType().isAir()) {
+            String msg = getConfig().getString("sell.messages.not-holding-item", "<red>You're not holding an item.");
+            p.sendMessage(color(msg)); p.sendActionBar(color(msg)); return;
+        }
+        double value = itemWorth(item, true);
+        if (value <= 0) {
+            String msg = getConfig().getString("sell.messages.not-sellable", "<red>This item is not sellable.");
+            p.sendMessage(color(msg)); p.sendActionBar(color(msg)); return;
+        }
+        String itemName = item.hasItemMeta() && item.getItemMeta().hasDisplayName()
+                ? plain(item.getItemMeta().displayName()) : human(item.getType().name());
+        String msg = getConfig().getString("sell.messages.worth", "<#01a5fc>%amount% %itemName% is worth <#01fd00>$%formattedWorth%")
+                .replace("%amount%", String.valueOf(item.getAmount())).replace("%itemName%", itemName)
+                .replace("%formattedWorth%", formatCompact(value));
+        p.sendMessage(color(msg)); p.sendActionBar(color(msg));
+    }
+
+    private void onSellClose(org.bukkit.event.inventory.InventoryCloseEvent event) {
+        if (!(event.getPlayer() instanceof Player p)) return;
+        if (!plain(event.getView().title()).equals(plain(color(guiConfig.getString("sell.title", "ѕᴇʟʟ ɪᴛᴇᴍѕ")))) return;
+        Inventory inv = event.getInventory();
+        double total = 0;
+        List<ItemStack> unsellable = new ArrayList<>();
+        for (ItemStack stack : inv.getContents()) {
+            if (stack == null || stack.getType().isAir()) continue;
+            double worth = itemWorth(stack, true);
+            if (worth > 0) total += worth;
+            else unsellable.add(stack.clone());
+        }
+        inv.clear();
+        if (total > 0 && economy != null) {
+            economy.depositPlayer(p, total);
+            String message = getConfig().getString("sell.messages.sold", "<#7afc00>+$%formatted%").replace("%formatted%", formatCompact(total));
+            p.sendMessage(color(message)); p.sendActionBar(color(message)); play(p, "sounds.sell-success");
+        } else if (total > 0) {
+            p.sendMessage(color("<red>Sell economy is unavailable. Items were returned."));
+            for (ItemStack stack : event.getInventory().getContents()) if (stack != null && !stack.getType().isAir()) unsellable.add(stack.clone());
+        }
+        for (ItemStack item : unsellable) {
+            Map<Integer, ItemStack> leftovers = p.getInventory().addItem(item);
+            leftovers.values().forEach(left -> p.getWorld().dropItemNaturally(p.getLocation(), left));
+        }
+        if (!unsellable.isEmpty()) {
+            String message = getConfig().getString("sell.messages.not-sellable", "<red>This item is not sellable.");
+            p.sendMessage(color(message)); p.sendActionBar(color(message));
+        }
+    }
+
+    private double itemWorth(ItemStack item, boolean includeShulkerContents) {
+        if (item == null || item.getType().isAir()) return 0;
+        if (item.getType() == Material.ENCHANTED_BOOK && item.getItemMeta() instanceof EnchantmentStorageMeta meta) {
+            return enchantmentWorth(meta.getStoredEnchants()) * item.getAmount();
+        }
+        double base = prices.getDouble("prices." + humanKey(item.getType().name()), -1);
+        if (base < 0) return 0;
+        double enchants = item.getEnchantments().entrySet().stream().mapToDouble(e -> enchantmentPrice(e.getKey(), e.getValue())).sum();
+        double contents = 0;
+        if (includeShulkerContents && item.getItemMeta() instanceof BlockStateMeta meta
+                && meta.getBlockState() instanceof ShulkerBox shulker) {
+            for (ItemStack inside : shulker.getInventory().getContents()) {
+                if (inside == null || inside.getType().isAir()) continue;
+                double insideValue = itemWorth(inside, false);
+                if (insideValue > 0) contents += insideValue;
+            }
+        }
+        return (base + enchants + contents) * item.getAmount();
+    }
+
+    private double enchantmentWorth(Map<Enchantment, Integer> enchantments) {
+        double total = 0;
+        for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) total += enchantmentPrice(entry.getKey(), entry.getValue());
+        return total;
+    }
+
+    private double enchantmentPrice(Enchantment enchantment, int level) {
+        return prices.getDouble("enchants." + enchantment.getKey().getKey().replace('_', ' ') + " " + level, 0);
+    }
+
+    private String humanKey(String materialName) { return materialName.toLowerCase(Locale.ROOT).replace('_', ' '); }
+    private String formatCompact(double value) {
+        String[] suffix = {"", "K", "M", "B", "T", "Q"};
+        int index = 0;
+        while (Math.abs(value) >= 1000 && index < suffix.length - 1) { value /= 1000; index++; }
+        java.text.DecimalFormat df = new java.text.DecimalFormat(value >= 100 ? "#,##0" : value >= 10 ? "#,##0.0" : "#,##0.##");
+        return df.format(value) + suffix[index];
     }
 
     private void setupEconomy() {
@@ -73,10 +183,12 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
             if (!sender.hasPermission("supashop.admin")) { sender.sendMessage(color("<red>You don't have permission.")); return true; }
-            reloadConfig(); loadGuiConfig(); setupEconomy(); sender.sendMessage(color("<green>SupaShop configuration reloaded.")); return true;
+            reloadConfig(); loadGuiConfig(); loadPrices(); setupEconomy(); sender.sendMessage(color("<green>SupaShop configuration reloaded.")); return true;
         }
         if (!(sender instanceof Player player)) { sender.sendMessage("This command can only be used by a player."); return true; }
         if (!player.hasPermission("supashop.use")) { player.sendMessage(color("<red>You don't have permission.")); return true; }
+        if (command.getName().equalsIgnoreCase("sell")) { openSellGui(player); return true; }
+        if (command.getName().equalsIgnoreCase("worth")) { showWorth(player); return true; }
         if (command.getName().equalsIgnoreCase("shardshop")) openShardShop(player); else openMain(player);
         return true;
     }
@@ -152,6 +264,7 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
     @EventHandler public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player p)) return;
         String view = plain(event.getView().title());
+        if (view.equals(plain(color(guiConfig.getString("sell.title", "ѕᴇʟʟ ɪᴛᴇᴍѕ")))) { event.setCancelled(true); return; }
         if (!isOurTitle(view)) return;
         event.setCancelled(true);
         if (event.getClickedInventory() == null || event.getClickedInventory() != event.getView().getTopInventory()) return;
@@ -183,8 +296,10 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
         }
     }
 
+    @EventHandler public void onSellCloseEvent(org.bukkit.event.inventory.InventoryCloseEvent event) { onSellClose(event); }
+
     @EventHandler public void onDrag(InventoryDragEvent event) {
-        if (isOurTitle(plain(event.getView().title()))) event.setCancelled(true);
+        if (isOurTitle(plain(event.getView().title())) || plain(event.getView().title()).equals(plain(color(guiConfig.getString("sell.title", "ѕᴇʟʟ ɪᴛᴇᴍѕ"))))) event.setCancelled(true);
     }
 
     private void buyMoneyItem(Player p, String category, String materialName) {
@@ -274,8 +389,10 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
     private Component title(String path) { return color(guiConfig.getString(path, getConfig().getString(path, "Shop"))); }
     private Component color(String text) {
         if (text == null) return Component.empty();
-        if (text.contains("<#") || text.contains("<red>") || text.contains("<white>") || text.contains("<green>") || text.contains("<yellow>") || text.contains("<dark_gray>") || text.contains("<light_purple>")) return mini.deserialize(text);
-        return LEGACY.deserialize(text);
+        Component component;
+        if (text.contains("<#") || text.contains("<red>") || text.contains("<white>") || text.contains("<green>") || text.contains("<yellow>") || text.contains("<dark_gray>") || text.contains("<light_purple>")) component = mini.deserialize(text);
+        else component = LEGACY.deserialize(text);
+        return component.decoration(TextDecoration.ITALIC, false);
     }
     private String plain(Component component) { return net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(component); }
     private boolean isOurTitle(String title) {

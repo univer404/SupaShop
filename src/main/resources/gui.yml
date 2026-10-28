@@ -63,3 +63,7 @@ layouts:
       lore: "<white>Click to buy"
 
 fill-empty-slots: false
+
+sell:
+  title: "ѕᴇʟʟ ɪᴛᴇᴍѕ"
+  size: 54

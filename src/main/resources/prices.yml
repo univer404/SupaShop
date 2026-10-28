@@ -1,0 +1,86 @@
+# Sell/worth price database.
+# Keys use lowercase Minecraft item names with spaces, matching the provided prices.yml format.
+# Replace/extend these entries with the full prices.yml database supplied for this conversion.
+enchants:
+  aqua affinity 1: 100
+  efficiency 1: 300
+  efficiency 2: 600
+  efficiency 3: 900
+  efficiency 4: 1200
+  efficiency 5: 1500
+  fortune 1: 100
+  fortune 2: 200
+  fortune 3: 300
+  mending 1: 200
+  protection 1: 200
+  protection 2: 400
+  protection 3: 600
+  protection 4: 800
+  sharpness 1: 300
+  sharpness 2: 600
+  sharpness 3: 900
+  sharpness 4: 1200
+  sharpness 5: 1500
+  unbreaking 1: 200
+  unbreaking 2: 400
+  unbreaking 3: 600
+prices:
+  dragon egg: 100000
+  netherite block: 2000
+  diamond block: 720
+  ancient debris: 300
+  enchanting table: 250
+  conduit: 250
+  goat horn: 150
+  ender chest: 150
+  raw iron block: 126
+  raw gold block: 126
+  wet sponge: 100
+  heart of the sea: 100
+  respawn anchor: 100
+  diamond ore: 85
+  coal block: 72
+  shulker shell: 50
+  emerald block: 45
+  gold block: 45
+  iron block: 30
+  bookshelf: 30
+  crying obsidian: 25
+  oak log: 16
+  spruce log: 16
+  birch log: 16
+  nether wart: 2
+  obsidian: 10
+  end stone: 1
+  netherrack: 0.25
+  elytra: 15000
+  netherite pickaxe: 300
+  netherite axe: 300
+  diamond pickaxe: 25
+  golden apple: 20
+  enchanted golden apple: 10000
+  cooked beef: 5
+  bread: 16
+  carrot: 12
+  potato: 12
+  sweet berries: 10
+  apple: 3
+  arrow: 1
+  enchanted book: 0
+  nether star: 5000
+  netherite ingot: 400
+  diamond: 80
+  amethyst shard: 50
+  beacon: 5090
+  totem of undying: 250
+  shulker box: 75
+  chest: 5
+  hopper: 30
+  experience bottle: 10
+  iron ingot: 5
+  gold ingot: 5
+  emerald: 3
+  redstone: 2
+  blaze rod: 2
+  glowstone dust: 1
+  gunpowder: 1

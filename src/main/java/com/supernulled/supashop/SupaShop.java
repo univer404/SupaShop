@@ -113,7 +113,7 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
             p.sendMessage(color(message)); p.sendActionBar(color(message)); play(p, "sounds.sell-success");
         } else if (total > 0) {
             p.sendMessage(color("<red>Sell economy is unavailable. Items were returned."));
-            for (ItemStack stack : event.getInventory().getContents()) if (stack != null && !stack.getType().isAir()) unsellable.add(stack.clone());
+            for (ItemStack stack : inv.getContents()) if (stack != null && !stack.getType().isAir()) unsellable.add(stack.clone());
         }
         for (ItemStack item : unsellable) {
             Map<Integer, ItemStack> leftovers = p.getInventory().addItem(item);
@@ -264,7 +264,7 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
     @EventHandler public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player p)) return;
         String view = plain(event.getView().title());
-        if (view.equals(plain(color(guiConfig.getString("sell.title", "ѕᴇʟʟ ɪᴛᴇᴍѕ"))))) { event.setCancelled(true); return; }
+        if (view.equals(plain(color(guiConfig.getString("sell.title", "ѕᴇʟʟ ɪᴛᴇᴍѕ"))))) return;
         if (!isOurTitle(view)) return;
         event.setCancelled(true);
         if (event.getClickedInventory() == null || event.getClickedInventory() != event.getView().getTopInventory()) return;
@@ -299,7 +299,7 @@ public final class SupaShop extends JavaPlugin implements Listener, CommandExecu
     @EventHandler public void onSellCloseEvent(org.bukkit.event.inventory.InventoryCloseEvent event) { onSellClose(event); }
 
     @EventHandler public void onDrag(InventoryDragEvent event) {
-        if (isOurTitle(plain(event.getView().title())) || plain(event.getView().title()).equals(plain(color(guiConfig.getString("sell.title", "ѕᴇʟʟ ɪᴛᴇᴍѕ"))))) event.setCancelled(true);
+        if (isOurTitle(plain(event.getView().title()))) event.setCancelled(true);
     }
 
     private void buyMoneyItem(Player p, String category, String materialName) {

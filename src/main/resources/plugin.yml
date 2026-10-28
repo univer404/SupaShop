@@ -10,6 +10,12 @@ commands:
   shardshop:
     description: Open the shard shop.
     usage: /shardshop
+  sell:
+    description: Open the sell inventory.
+    usage: /sell
+  worth:
+    description: Check the sell value of the item in your hand.
+    usage: /worth
 permissions:
   supashop.use:
     description: Allows access to SupaShop menus.
